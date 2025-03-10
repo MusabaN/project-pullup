@@ -49,7 +49,7 @@ export default function Home() {
           set.type === "banded" ? data.band.emoji : data.normal.emoji;
         const checkEmoji =
           set.type === "banded" ? data.band.check : data.normal.check;
-        newCopyString += `${emoji}: ${Array(set.reps)
+        newCopyString += `${emoji} ${Array(set.reps)
           .fill(checkEmoji)
           .join(" ")}\n`;
       });
