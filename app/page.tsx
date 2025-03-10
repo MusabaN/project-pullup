@@ -1,101 +1,223 @@
-import Image from "next/image";
+"use client";
+import data from "@/data.json";
+import { useState, useEffect } from "react";
+
+type WorkoutSet = {
+  type: "banded" | "no-band";
+  reps: number;
+  checked: boolean;
+};
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [sets, setSets] = useState<WorkoutSet[]>([]);
+  const [streak, setStreak] = useState(0);
+  const [copyString, setCopyString] = useState("");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  // Load data from localStorage on initial render
+  useEffect(() => {
+    // Only run on client-side
+    if (typeof window === "undefined") return;
+
+    try {
+      const savedStreak = localStorage.getItem("pullup-streak");
+      if (savedStreak) {
+        setStreak(parseInt(savedStreak, 10) || 0);
+      }
+
+      const savedSets = localStorage.getItem("pullup-sets");
+      if (savedSets) {
+        const parsedSets = JSON.parse(savedSets);
+        if (Array.isArray(parsedSets)) {
+          setSets(parsedSets);
+        }
+      }
+    } catch (err) {
+      console.error("Error loading data from localStorage:", err);
+    }
+  }, []);
+
+  // Save data to localStorage when it changes
+  useEffect(() => {
+    const updateCopyString = () => {
+      let newCopyString = `${new Date().getDate()}/${
+        new Date().getMonth() + 1
+      }\n`;
+      newCopyString += `Streak: ${streak}\n`;
+      sets.forEach((set) => {
+        if (!set.checked) return;
+        const emoji =
+          set.type === "banded" ? data.band.emoji : data.normal.emoji;
+        const checkEmoji =
+          set.type === "banded" ? data.band.check : data.normal.check;
+        newCopyString += `${emoji}: ${Array(set.reps)
+          .fill(checkEmoji)
+          .join(" ")}\n`;
+      });
+      setCopyString(newCopyString);
+    };
+    updateCopyString();
+
+    try {
+      localStorage.setItem("pullup-streak", streak.toString());
+      localStorage.setItem("pullup-sets", JSON.stringify(sets));
+    } catch (err) {
+      console.error("Error saving data to localStorage:", err);
+    }
+  }, [streak, sets]);
+
+  // Add a new set with default values
+  const addSet = () => {
+    setSets([...sets, { type: "no-band", reps: 0, checked: true }]);
+  };
+
+  // Handle type change for a set
+  const handleTypeChange = (index: number, newType: "banded" | "no-band") => {
+    const updatedSets = [...sets];
+    updatedSets[index].type = newType;
+    setSets(updatedSets);
+  };
+
+  // Handle reps change for a set
+  const handleRepsChange = (index: number, newReps: number) => {
+    const updatedSets = [...sets];
+    updatedSets[index].reps = newReps;
+    setSets(updatedSets);
+  };
+
+  // Toggle checked status of a set
+  const toggleChecked = (index: number) => {
+    const updatedSets = [...sets];
+    updatedSets[index].checked = !updatedSets[index].checked;
+    setSets(updatedSets);
+  };
+
+  // Add functions to move sets up and down
+  const moveSetUp = (index: number) => {
+    if (index === 0) return; // Can't move up if already at the top
+
+    const updatedSets = [...sets];
+    // Swap current item with the one above it
+    [updatedSets[index - 1], updatedSets[index]] = [
+      updatedSets[index],
+      updatedSets[index - 1],
+    ];
+    setSets(updatedSets);
+  };
+
+  const moveSetDown = (index: number) => {
+    if (index === sets.length - 1) return; // Can't move down if already at the bottom
+
+    const updatedSets = [...sets];
+    // Swap current item with the one below it
+    [updatedSets[index], updatedSets[index + 1]] = [
+      updatedSets[index + 1],
+      updatedSets[index],
+    ];
+    setSets(updatedSets);
+  };
+
+  return (
+    <>
+      <h1>Copy String</h1>
+      <div className="bg-white text-black p-4 relative">
+        <pre className="max-h-40 overflow-auto">{copyString}</pre>
+        <button
+          onClick={() => navigator.clipboard.writeText(copyString)}
+          className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded text-sm"
+        >
+          Copy
+        </button>
+      </div>
+
+      <h1>Streak</h1>
+      <h2>{streak}</h2>
+      <div>
+        <button
+          className="p-2 m-2 bg-white text-black"
+          onClick={() => setStreak(streak + 1)}
+        >
+          Increment
+        </button>
+        <button
+          className="p-2 m-2 bg-white text-black"
+          onClick={() => setStreak(0)}
+        >
+          Reset
+        </button>
+      </div>
+      <h1 className="text-2xl font-bold mb-4">Sets</h1>
+      {/* List of sets */}
+      {sets.map((set, i) => (
+        <div key={i} className="border p-3 mb-3 rounded">
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center">
+              <h2 className="text-lg font-semibold mr-2">Set {i + 1}</h2>
+              <div className="flex flex-col">
+                <button
+                  onClick={() => moveSetUp(i)}
+                  className={`px-1 text-sm ${
+                    i === 0 ? "text-gray-400" : "text-blue-500"
+                  }`}
+                  disabled={i === 0}
+                >
+                  ▲
+                </button>
+                <button
+                  onClick={() => moveSetDown(i)}
+                  className={`px-1 text-sm ${
+                    i === sets.length - 1 ? "text-gray-400" : "text-blue-500"
+                  }`}
+                  disabled={i === sets.length - 1}
+                >
+                  ▼
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={() => toggleChecked(i)}
+              className={`w-6 h-6 border flex items-center justify-center ${
+                set.checked ? "bg-green-100" : ""
+              }`}
+            >
+              {set.checked ? "✓" : ""}
+            </button>
+          </div>
+
+          <div className="mb-2">
+            <select
+              value={set.type}
+              onChange={(e) =>
+                handleTypeChange(i, e.target.value as "banded" | "no-band")
+              }
+              className="border p-1 rounded w-full"
+            >
+              <option value="banded">Banded</option>
+              <option value="no-band">No band</option>
+            </select>
+          </div>
+
+          <div className="flex items-center">
+            <label className="mr-2">Reps:</label>
+            <input
+              type="number"
+              value={set.reps}
+              onChange={(e) =>
+                handleRepsChange(i, parseInt(e.target.value) || 0)
+              }
+              className="border p-1 rounded w-20"
+              min="0"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      ))}
+
+      {/* Add new set button */}
+      <button
+        onClick={addSet}
+        className="bg-blue-500 text-white px-4 py-2 rounded flex items-center"
+      >
+        <span className="mr-1">+</span> Add Set
+      </button>
+    </>
   );
 }

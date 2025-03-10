@@ -1,0 +1,11 @@
+{
+  "band": {
+    "emoji": ":yarn:",
+    "check": ":large_yellow_square:"
+  },
+  "normal": {
+    "emoji": ":muscle:",
+    "check": ":large_green_square:"
+  },
+  "streak": "fire"
+}
