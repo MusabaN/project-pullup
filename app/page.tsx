@@ -42,7 +42,7 @@ export default function Home() {
       let newCopyString = `${new Date().getDate()}/${
         new Date().getMonth() + 1
       }\n`;
-      newCopyString += `Streak: ${streak}\n`;
+      newCopyString += `${data.streak} Streak: ${streak}\n`;
       sets.forEach((set) => {
         if (!set.checked) return;
         const emoji =
