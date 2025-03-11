@@ -173,6 +173,12 @@ export default function Home() {
                 </button>
               </div>
             </div>
+            <div>
+            <button onClick={() => setSets(sets.filter((_, j) => j !== i))}>
+              <span role="img" aria-label="Delete set">
+                ❌
+              </span> 
+            </button>
             <button
               onClick={() => toggleChecked(i)}
               className={`w-6 h-6 border flex items-center justify-center ${
@@ -181,6 +187,7 @@ export default function Home() {
             >
               {set.checked ? "✓" : ""}
             </button>
+            </div>
           </div>
 
           <div className="mb-2">
