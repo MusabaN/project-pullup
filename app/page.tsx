@@ -127,8 +127,11 @@ export default function Home() {
       <div className="bg-white text-black p-4 relative">
         <pre className="max-h-40 overflow-auto">{copyString}</pre>
         <button
-          onClick={() => navigator.clipboard.writeText(copyString)}
-          className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded text-sm"
+          onClick={() => {
+            navigator.clipboard.writeText(copyString)
+            alert("Copied to clipboard!")
+          }}
+          className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded text-sm cursor-pointer"
         >
           Copy
         </button>
